@@ -46,7 +46,7 @@ CREATE TABLE IF NOT EXISTS files (
 );
 CREATE TABLE IF NOT EXISTS syscalls_log (
     id        INTEGER PRIMARY KEY AUTOINCREMENT,
-    name      TEXT NOT NULL,
+    syscall_name TEXT NOT NULL,
     args      TEXT,
     user      TEXT,
     status    TEXT NOT NULL,
@@ -55,12 +55,32 @@ CREATE TABLE IF NOT EXISTS syscalls_log (
 """
 
 
+def _migrate_log_column(conn: sqlite3.Connection) -> None:
+    """Занятие 1 называло колонку `name`; с занятия 2 она `syscall_name`."""
+    cols = [r[1] for r in conn.execute("PRAGMA table_info(syscalls_log)")]
+    if "name" in cols and "syscall_name" not in cols:
+        conn.execute("ALTER TABLE syscalls_log RENAME COLUMN name TO syscall_name")
+
+
+def fetch_logs(limit: int = 10) -> list[dict]:
+    """Последние записи журнала системных вызовов (новые сверху)."""
+    conn = get_connection()
+    try:
+        rows = conn.execute(
+            "SELECT id, syscall_name, args, user, status, timestamp "
+            "FROM syscalls_log ORDER BY id DESC LIMIT ?", (limit,)).fetchall()
+    finally:
+        conn.close()
+    return [dict(r) for r in rows]
+
+
 def init_db() -> None:
     """Создаёт таблицы и учётную запись администратора (если её ещё нет)."""
     conn = get_connection()
     try:
         with conn:
             conn.executescript(SCHEMA)
+            _migrate_log_column(conn)
             login, password, role = config.DEFAULT_ADMIN
             conn.execute(
                 "INSERT OR IGNORE INTO users (login, password_hash, role) VALUES (?, ?, ?)",

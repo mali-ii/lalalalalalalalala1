@@ -16,3 +16,9 @@ python -m unittest discover tests
 - `db/` — файл базы данных
 - `tests/` — тесты
 - `logs/` — журналы работы
+
+## Занятие 2
+- Архитектура и диаграмма компонентов: `docs/02_OS_Architecture.md`, `docs/02_component_diagram.png`
+- 13 системных вызовов `sys_*` в `src/syscalls.py`; самопроверка: `python3 -m src.syscalls`
+- Оболочка: команды `whoami`, `login`, `logout`, `create`, `ls`, `ps`, `logs`
+- Тесты: `python3 -m unittest discover tests`
